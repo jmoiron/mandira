@@ -39,11 +39,11 @@ Well, $10000.0, after taxes.
 
 ## Language
 
-Tags in Mandira are in `{{double-braces}}`.  For the purposes of this document, the part inside the tag will be called the tag **key**.
+Tags in Mandira are in `{{double-braces}}`, and the part inside the tag is called the tag **key**.
 
 ### Variables
 
-**Variable** tags look like `{{name}}`.  This will attempt to look up the **name** key in the current context and render it.  If **name** isn't found, nothing is rendered.  Variables always are HTML-escaped.  To avoid escaping, use `{{{name}}}` with three braces instead.
+**Variable** tags look like `{{name}}`.  This will attempt to look up the `name` key in the current context and render it.  If `name` isn't found, nothing is rendered.  Variables always are HTML-escaped.  To avoid escaping, use `{{{name}}}` with three braces instead.
 
 Template:
 
@@ -74,7 +74,7 @@ Sübü'ätäi
 
 ### Filters
 
-Variable tags can also take **filters**, which modify the output of variables.  Filters are applied using the `|` character (like unix pipes), can take additional arguments which must be in parentheses, and can be chained together from left to right.  `{{first|upper|js}}` will take the **first** variable, upper case it, and then escape it for javascript.  The actual **first** variable in the context remains unchanged;  it is only the output that changes.
+Variable tags can also take **filters**, which modify the output of variables.  Filters are applied using the `|` character (like unix pipes), can take additional arguments which must be in parentheses, and can be chained together from left to right.  `{{first|upper|js}}` will take the `first` variable, upper case it, and then escape it for javascript.  The actual `first` variable in the context remains unchanged;  it is only the output that changes.
 
 Template:
 
@@ -167,8 +167,8 @@ Output:
 2: Gaius Julius Caesar
 
 DER GROßE, Friedrich
-,અર્જુન
-徳川家康
+, અર્જુન
+徳川, 家康
 
 Napoléon Bonaparte
 b. 15 August 1769, d. 5 May 1821

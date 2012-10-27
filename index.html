@@ -11,6 +11,8 @@
             h2 { margin-bottom: 6px; }
             td.code { width: 100%; }
             pre {
+                font-family: consolas,monospace;
+                font-size: 85%;
                 line-height: 1.5em;
                 padding: .5em 1em; 
                 border-radius: 5px;
@@ -18,7 +20,10 @@
                 text-shadow: 0 1px 0 white;
             }
             code {
-                color: #444;                
+                font-family: consolas,monospace;
+                font-size: 85%;
+                color: #000;           
+                font-weight: bold;
             }
         </style>
         <script src="assets/js/prettify.js"></script>
@@ -59,9 +64,9 @@ Well, $10000.0, after taxes.
 </pre>
 
 <h2>Language</h2>
-<p>Tags in Mandira are in <code>{{double-braces}}</code>.  For the purposes of this document, the part inside the tag will be called the tag <strong>key</strong>.</p>
+<p>Tags in Mandira are in <code>{{double-braces}}</code>, and the part inside the tag is called the tag <strong>key</strong>.</p>
 <h3>Variables</h3>
-<p><strong>Variable</strong> tags look like <code>{{name}}</code>.  This will attempt to look up the <strong>name</strong> key in the current context and render it.  If <strong>name</strong> isn't found, nothing is rendered.  Variables always are HTML-escaped.  To avoid escaping, use <code>{{{name}}}</code> with three braces instead.</p>
+<p><strong>Variable</strong> tags look like <code>{{name}}</code>.  This will attempt to look up the <code>name</code> key in the current context and render it.  If <code>name</code> isn't found, nothing is rendered.  Variables always are HTML-escaped.  To avoid escaping, use <code>{{{name}}}</code> with three braces instead.</p>
 <p>Template:</p>
 <pre class="prettyprint linenums">
 {{first}}
@@ -87,7 +92,7 @@ Sübü'ätäi
 </pre>
 
 <h3>Filters</h3>
-<p>Variable tags can also take <strong>filters</strong>, which modify the output of variables.  Filters are applied using the <code>|</code> character (like unix pipes), can take additional arguments which must be in parentheses, and can be chained together from left to right.  <code>{{first|upper|js}}</code> will take the <strong>first</strong> variable, upper case it, and then escape it for javascript.  The actual <strong>first</strong> variable in the context remains unchanged;  it is only the output that changes.</p>
+<p>Variable tags can also take <strong>filters</strong>, which modify the output of variables.  Filters are applied using the <code>|</code> character (like unix pipes), can take additional arguments which must be in parentheses, and can be chained together from left to right.  <code>{{first|upper|js}}</code> will take the <code>first</code> variable, upper case it, and then escape it for javascript.  The actual <code>first</code> variable in the context remains unchanged;  it is only the output that changes.</p>
 <p>Template:</p>
 <pre class="prettyprint linenums">
 {{first|upper}} {{last}}
@@ -170,8 +175,8 @@ b. {{born}}, d. {{died}}
 2: Gaius Julius Caesar
 
 DER GROßE, Friedrich
-,અર્જુન
-徳川家康
+, અર્જુન
+徳川, 家康
 
 Napoléon Bonaparte
 b. 15 August 1769, d. 5 May 1821
