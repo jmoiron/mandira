@@ -162,9 +162,9 @@ Context:
 Output:
 
 ```
-Alexander The Great
-Hannibal Barca
-Gaius Julius Caesar
+0: Alexander The Great
+1: Hannibal Barca
+2: Gaius Julius Caesar
 
 DER GROßE, Friedrich
 ,અર્જુન
