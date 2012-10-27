@@ -13,7 +13,7 @@ A simple Mandira template:
 ```
 Hello {{name}}
 You have just won ${{value}}!
-{{?if in_ca}}
+{{?if in_monaco}}
 Well, ${{taxed_value}}, after taxes.
 {{/if}}
 ```
