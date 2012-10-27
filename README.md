@@ -39,7 +39,7 @@ Well, $10000.0, after taxes.
 
 ## Language
 
-Tags in Mandira can be `{{double-braces}}`, `{{{triple-braces}}}`, or `{% brace-percents %}`.  For the purposes of this document, the part inside the tag will be called the tag **key**.  Double and triple brace tags are used for *variables*, Double brace tags also for *sections*, and brace-percent tags are used for *conditionals*.
+Tags in Mandira are in `{{double-braces}}`.  For the purposes of this document, the part inside the tag will be called the tag **key**.
 
 ### Variables
 
