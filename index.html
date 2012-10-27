@@ -59,7 +59,7 @@ Well, $10000.0, after taxes.
 </pre>
 
 <h2>Language</h2>
-<p>Tags in Mandira can be <code>{{double-braces}}</code>, <code>{{{triple-braces}}}</code>, or <code>{% brace-percents %}</code>.  For the purposes of this document, the part inside the tag will be called the tag <strong>key</strong>.  Double and triple brace tags are used for <em>variables</em>, Double brace tags also for <em>sections</em>, and brace-percent tags are used for <em>conditionals</em>.</p>
+<p>Tags in Mandira are in <code>{{double-braces}}</code>.  For the purposes of this document, the part inside the tag will be called the tag <strong>key</strong>.</p>
 <h3>Variables</h3>
 <p><strong>Variable</strong> tags look like <code>{{name}}</code>.  This will attempt to look up the <strong>name</strong> key in the current context and render it.  If <strong>name</strong> isn't found, nothing is rendered.  Variables always are HTML-escaped.  To avoid escaping, use <code>{{{name}}}</code> with three braces instead.</p>
 <p>Template:</p>
