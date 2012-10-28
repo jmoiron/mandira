@@ -1,6 +1,7 @@
 package mandira
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -64,23 +65,24 @@ func tErr(t *testing.T, err error) {
 
 // shortcut for a new token list
 func ntl(s string) *tokenList {
-	tl, _ = tokenize(s)
+	tl, _ := tokenize(s)
 	return &tokenList{tl, 0, 0}
 }
 
 func TestCondParser(t *testing.T) {
 	expr, err := parseCondExpression(ntl("foo"))
-	tErr(err)
+	tErr(t, err)
 	expr, err = parseCondExpression(ntl("not foo"))
-	tErr(err)
+	tErr(t, err)
 	expr, err = parseCondExpression(ntl("foo > bar"))
-	tErr(err)
+	tErr(t, err)
 	expr, err = parseCondExpression(ntl("foo != bar"))
-	tErr(err)
+	tErr(t, err)
 	expr, err = parseCondExpression(ntl("foo or bar"))
-	tErr(err)
+	tErr(t, err)
 	expr, err = parseCondExpression(ntl("not foo or not bar"))
-	tErr(err)
+	tErr(t, err)
+	fmt.Println(expr)
 }
 
 func TestVarParser(t *testing.T) {
