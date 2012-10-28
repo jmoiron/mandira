@@ -1,7 +1,6 @@
 package mandira
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -72,17 +71,89 @@ func ntl(s string) *tokenList {
 func TestCondParser(t *testing.T) {
 	expr, err := parseCondExpression(ntl("foo"))
 	tErr(t, err)
+	c, ok := expr.lhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if c.not {
+		t.Error("Did not expect negated condition")
+	}
+
 	expr, err = parseCondExpression(ntl("not foo"))
 	tErr(t, err)
+	c, ok = expr.lhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if !c.not {
+		t.Error("Expected negated condition")
+	}
+
 	expr, err = parseCondExpression(ntl("foo > bar"))
 	tErr(t, err)
+	bc, ok := expr.lhs.(*bincond)
+	if !ok {
+		t.Fatalf("Expected binary condition, got %v", expr.lhs)
+	}
+	if bc.lhs.not || bc.rhs.not {
+		t.Error("Did not expect negated condition")
+	}
+	if bc.oper != ">" {
+		t.Error("Wrong operator, expected >, got " + bc.oper)
+	}
+
 	expr, err = parseCondExpression(ntl("foo != bar"))
 	tErr(t, err)
+	bc, ok = expr.lhs.(*bincond)
+	if !ok {
+		t.Fatalf("Expected binary condition, got %v", expr.lhs)
+	}
+	if bc.lhs.not || bc.rhs.not {
+		t.Error("Did not expect negated condition")
+	}
+	if bc.oper != "!=" {
+		t.Error("Wrong operator, expected !=, got " + bc.oper)
+	}
+
 	expr, err = parseCondExpression(ntl("foo or bar"))
 	tErr(t, err)
-	expr, err = parseCondExpression(ntl("not foo or not bar"))
+	c, ok = expr.lhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if c.not {
+		t.Error("Expected non-negated condition")
+	}
+	c, ok = expr.rhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if c.not {
+		t.Error("Expected non-negated condition")
+	}
+	if expr.oper != "or" {
+		t.Error("Expected or")
+	}
+
+	expr, err = parseCondExpression(ntl("not foo and not bar"))
 	tErr(t, err)
-	fmt.Println(expr)
+	c, ok = expr.lhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if !c.not {
+		t.Error("Expected negated condition")
+	}
+	c, ok = expr.rhs.(*cond)
+	if !ok {
+		t.Error("Expected condition")
+	}
+	if !c.not {
+		t.Error("Expected negated condition")
+	}
+	if expr.oper != "and" {
+		t.Error("Expected and")
+	}
 }
 
 func TestVarParser(t *testing.T) {

@@ -102,6 +102,14 @@ func (t *tokenList) Peek() string {
 	return t.tokens[t.p]
 }
 
+// Go back to previous token and return it.
+func (t *tokenList) Prev() string {
+	if t.p > 0 {
+		t.p--
+	}
+	return t.tokens[t.p]
+}
+
 type parserError struct {
 	tokens  *tokenList
 	message string
@@ -155,6 +163,11 @@ func parseBoolExpression(tokens *tokenList) (interface{}, error) {
 		c2, err := parseCond(tokens)
 		if err != nil {
 			return c2, err
+		}
+		// disallow things like "not foo > bar" in favor of "foo <= bar"
+		// and also nonsensical stuff like "not foo > not bar"
+		if c.not || c2.not {
+			return nil, &parserError{tokens, "Unary operators invalid in binary conditions (use converse of binary operator instead)"}
 		}
 		return &bincond{tok, c, c2}, nil
 	}
@@ -221,6 +234,7 @@ func parseVarExpression(tokens *tokenList) (*varExpr, error) {
 
 	tok = tokens.Next()
 	if tok != "|" && tok != "" {
+		tokens.Prev()
 		return expr, nil
 	}
 
@@ -232,7 +246,10 @@ func parseVarExpression(tokens *tokenList) (*varExpr, error) {
 			}
 			expr.exprs = append(expr.exprs, e)
 			tok = tokens.Next()
+		} else if tok == "" {
+			return expr, nil
 		} else {
+			tokens.Prev()
 			return expr, nil
 		}
 	}
