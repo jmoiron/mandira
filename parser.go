@@ -65,8 +65,9 @@ type bincond struct {
 }
 
 type condExpr struct {
-	combinator string
-	exprs      []interface{}
+	oper string
+	lhs  interface{}
+	rhs  interface{}
 }
 
 type varExpr struct {
@@ -128,8 +129,36 @@ func parseAtom(token string) interface{} {
 }
 
 // parse a single unary condition (or naked varexpr)
-func parseCond(tokens []string) (*cond, error) {
-	return &cond{}, nil
+func parseCond(tokens *tokenList) (*cond, error) {
+	var err error
+	c := &cond{}
+	tok := tokens.Peek()
+	if tok == "not" {
+		c.not = true
+		tokens.Next()
+	}
+	c.expr, err = parseVarExpression(tokens)
+	return c, err
+}
+
+// parse a unary or binary boolean expression and return it.
+// Valid return values are of type cond or bincond
+func parseBoolExpression(tokens *tokenList) (interface{}, error) {
+	c, err := parseCond(tokens)
+	if err != nil {
+		return c, err
+	}
+	tok := tokens.Peek()
+	switch tok {
+	case "<", "<=", ">", ">=", "==", "!=":
+		tokens.Next()
+		c2, err := parseCond(tokens)
+		if err != nil {
+			return c2, err
+		}
+		return &bincond{tok, c, c2}, nil
+	}
+	return c, nil
 }
 
 // Parse a condition, which can be:
@@ -137,8 +166,27 @@ func parseCond(tokens []string) (*cond, error) {
 //   not condition
 //   "(" condition ")"
 //   condition binary condition
-func parseCondExpression(tokens []string) (interface{}, error) {
-	return nil, nil
+func parseCondExpression(tokens []string) (*condExpr, error) {
+	var err error
+	c := &condExpr{}
+	c.lhs, err = parseBoolExpression(tokens)
+
+	if err != nil {
+		return &condExpr{}, err
+	}
+
+	tok := tokens.Peek()
+	switch tok {
+	case "and", "or":
+		c.oper = tok
+		tokens.Next()
+		c.rhs, err = parseBoolExpression(tokens)
+		if err != nil {
+			return c, err
+		}
+		return c
+	}
+	return c
 }
 
 func parseFuncExpression(tokens *tokenList) (*funcExpr, error) {
