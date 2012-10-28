@@ -31,10 +31,10 @@ type conditionalExpression struct {
 }
 
 type sectionElement struct {
-	name        string
-	conditional bool
-	startline   int
-	elems       []interface{}
+	name      string
+	startline int
+	elems     []interface{}
+	tokens    []string
 }
 
 type Template struct {
@@ -192,16 +192,21 @@ func (tmpl *Template) parseTag(tag string, section ...*sectionElement) error {
 			tmpl.p += 2
 		}
 
-		se := sectionElement{name, false, tmpl.curline, []interface{}{}}
+		se := sectionElement{name, tmpl.curline, []interface{}{}, []string{}}
 		err := tmpl.parseSection(&se)
 		if err != nil {
 			return err
 		}
 		*elems = append(*elems, &se)
 	case '?':
+		if tag[:4] != "?if " {
+			return parseError{tmpl.curline, "invalid conditional tag: " + tag}
+		}
 		name := "if"
-		se := sectionElement{name, true, tmpl.curline, []interface{}{}}
-		err := tmpl.parseSection(&se)
+		/* FIXME: parse conditional into tokens */
+		tokens, err := tokenize(tag[4:])
+		se := sectionElement{name, tmpl.curline, []interface{}{}, tokens}
+		err = tmpl.parseSection(&se)
 		if err != nil {
 			return err
 		}
