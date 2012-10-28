@@ -9,7 +9,8 @@ import (
 
 word = ([a-zA-Z1-9]+)
 dot = .
-binary = <|<=|>|>=|!=|==|and|or
+binop = <|<=|>|>=|!=|==
+comb = or|and
 unary = not
 filter = |
 variable = word
@@ -20,10 +21,23 @@ bool = true | false
 atom = variable | string | int | float | bool
 funcexpr = word [( atom[, atom...] )]
 varexpr = variable [|funcexpr...]
-cond = unary varexpr | varexpr
-binarycond = cond binary cond [binary cond ...]
-condexpr = [(] cond | binarycond [)]
-condition = condexpr [binary condexpr...]
+
+The following grammar describes a simplified, easy to implement boolean algebra.
+
+Conditions can be a varexpr (var|filter...) or a negated var expr.
+Binary Conditions must be two of these joined by a numeric binop
+ConditionalExpressions are either one Condition (either type), or two joined by
+a boolean combinator (and/or).
+
+Multiple and/or is prohibited.  Grouping is unnecessary.  To achieve more complex
+logic, use multiple conditional blocks. Numeric operators take precedence over and/or.
+Binary logic is evaluated from left to right, and & ors are short circuited by
+false & true values in the lhs, respectively.
+
+cond = varexpr | not varexpr
+bincond = cond binop cond
+boolexpr = cond | bincond
+condexpr = boolexpr [comb boolexpr]
 
 */
 
@@ -39,20 +53,65 @@ type funcExpr struct {
 	arguments []interface{}
 }
 
+type cond struct {
+	not  bool
+	expr interface{}
+}
+
+type bincond struct {
+	oper string
+	lhs  cond
+	rhs  cond
+}
+
+type condExpr struct {
+	combinator string
+	exprs      []interface{}
+}
+
 type varExpr struct {
 	exprs []interface{}
 }
 
+type tokenList struct {
+	tokens []string
+	p      int
+	run    int
+}
+
+// Return the number of remaining tokens
+func (t *tokenList) Remaining() int {
+	return len(t.tokens) - t.p
+}
+
+// Return the next token.  Returns "" if there are none left.
+func (t *tokenList) Next() string {
+	if t.p == len(t.tokens) {
+		return ""
+	}
+	t.p++
+	return t.tokens[t.p-1]
+}
+
+// Peek at the current token. Returns "" if there are none left.
+func (t *tokenList) Peek() string {
+	if t.p == len(t.tokens) {
+		return ""
+	}
+	return t.tokens[t.p]
+}
+
 type parserError struct {
-	token   string
-	tokens  []string
+	tokens  *tokenList
 	message string
 }
 
 func (p *parserError) Error() string {
-	return fmt.Sprintf("%s: %s in %v", p.message, p.token, p.tokens)
+	return fmt.Sprintf(`%s: "%s" in %v`, p.message, p.tokens.Peek(), p.tokens)
 }
 
+// Parse an atom;  an atom is a literal or a lookup expression.
+// lookup expressions can have any text but whitespace in them
 func parseAtom(token string) interface{} {
 	if token[0] == '"' {
 		return token[1 : len(token)-1]
@@ -68,26 +127,37 @@ func parseAtom(token string) interface{} {
 	return &lookupExpr{token}
 }
 
-func parseFuncExpression(tokens []string) (*funcExpr, error) {
-	fe := &funcExpr{}
-	if len(tokens) == 0 {
-		return fe, &parserError{"", tokens, "Expected filter name"}
-	}
-	fe.name = tokens[0]
-	if len(tokens) == 1 {
-		return fe, nil
-	}
-	if tokens[1] != "(" || tokens[len(tokens)-1] != ")" {
-		return fe, &parserError{tokens[1], tokens, "Expected ()'s around arguments"}
-	}
+// parse a single unary condition (or naked varexpr)
+func parseCond(tokens []string) (*cond, error) {
+	return &cond{}, nil
+}
 
-	for i := 2; i < len(tokens)-1; i++ {
-		if i%2 == 0 {
-			// TODO: verify valid variable names
-			fe.arguments = append(fe.arguments, parseAtom(tokens[i]))
-		} else {
-			if tokens[i] != "," {
-				return fe, &parserError{tokens[i], tokens, "Expected comma (,)"}
+// Parse a condition, which can be:
+//   variable
+//   not condition
+//   "(" condition ")"
+//   condition binary condition
+func parseCondExpression(tokens []string) (interface{}, error) {
+	return nil, nil
+}
+
+func parseFuncExpression(tokens *tokenList) (*funcExpr, error) {
+	fe := &funcExpr{}
+	fe.name = tokens.Next()
+	if len(fe.name) == 0 {
+		return fe, &parserError{tokens, "Expected filter name, got nil"}
+	}
+	tok := tokens.Peek()
+	if tok == "(" {
+		tokens.Next()
+		for tok = tokens.Next(); len(tok) > 0; tok = tokens.Next() {
+			fe.arguments = append(fe.arguments, parseAtom(tok))
+			tok = tokens.Next()
+			if tok == ")" {
+				break
+			}
+			if tok != "," {
+				return fe, &parserError{tokens, "Expected comma (,)"}
 			}
 		}
 	}
@@ -95,57 +165,41 @@ func parseFuncExpression(tokens []string) (*funcExpr, error) {
 	return fe, nil
 }
 
-func parseVarExpression(tokens []string) (*varExpr, error) {
+func parseVarExpression(tokens *tokenList) (*varExpr, error) {
+
 	expr := &varExpr{}
-	if len(tokens) == 0 {
-		return expr, &parserError{"", tokens, "Empty expression"}
+	tok := tokens.Next()
+	if len(tok) == 0 {
+		return expr, &parserError{tokens, "Empty expression"}
 	}
 	// the first token is definitely a variable
-	expr.exprs = append(expr.exprs, &lookupExpr{tokens[0]})
-	if len(tokens) == 1 {
+	expr.exprs = append(expr.exprs, &lookupExpr{tok})
+
+	tok = tokens.Next()
+	if tok != "|" && tok != "" {
 		return expr, nil
 	}
 
-	if tokens[1] != "|" {
-		return expr, &parserError{tokens[1], tokens, "Expected pipe (|) for filter expression"}
-	}
-
-	i := 2
-	run := 2
-	for ; i < len(tokens); i++ {
-		if tokens[i] == "|" && run == i {
-			return expr, &parserError{tokens[i], tokens, "Expected filter expression"}
-		} else if tokens[i] == "|" {
-			e, err := parseFuncExpression(tokens[run:i])
+	for len(tok) > 0 {
+		if tok == "|" {
+			e, err := parseFuncExpression(tokens)
 			if err != nil {
 				return expr, err
 			}
 			expr.exprs = append(expr.exprs, e)
-			run = i + 1
+			tok = tokens.Next()
+		} else {
+			return expr, nil
 		}
 	}
-	if run != i {
-		e, err := parseFuncExpression(tokens[run:])
-		if err != nil {
-			return expr, err
-		}
-		expr.exprs = append(expr.exprs, e)
-	}
+
 	return expr, nil
 }
 
 // tokenize a conditional, return a list of strings
 func tokenize(c string) ([]string, error) {
 	b := []byte(c)
-	tn := struct {
-		tokens []string
-		run    int
-		p      int
-	}{
-		[]string{},
-		0,
-		0,
-	}
+	tn := tokenList{[]string{}, 0, 0}
 
 	for ; tn.p < len(b); tn.p++ {
 		switch b[tn.p] {

@@ -62,13 +62,13 @@ func tErr(t *testing.T, err error) {
 	}
 }
 
-func TestFuncParser(t *testing.T) {
+func TestCondParser(t *testing.T) {
 
 }
 
 func TestVarParser(t *testing.T) {
 	// naked test
-	expr, err := parseVarExpression([]string{"hello"})
+	expr, err := parseVarExpression(&tokenList{[]string{"hello"}, 0, 0})
 	tErr(t, err)
 	if len(expr.exprs) != 1 {
 		t.Errorf("Expected a single lookup expression, got %v\n", expr.exprs)
@@ -82,7 +82,7 @@ func TestVarParser(t *testing.T) {
 	}
 
 	// naked with filter
-	expr, err = parseVarExpression([]string{"hello", "|", "upper"})
+	expr, err = parseVarExpression(&tokenList{[]string{"hello", "|", "upper"}, 0, 0})
 	tErr(t, err)
 	if len(expr.exprs) != 2 {
 		t.Fatalf("Expected 2 expressions, got %v\n", len(expr.exprs))
@@ -110,7 +110,7 @@ func TestVarParser(t *testing.T) {
 	if len(toks) != 17 {
 		t.Fatalf("Unexpected tokenization results for test %v\n", toks)
 	}
-	expr, err = parseVarExpression(toks)
+	expr, err = parseVarExpression(&tokenList{toks, 0, 0})
 
 	if len(expr.exprs) != 4 {
 		t.Fatalf("Expected 4 expressions, got %d (%v)\n", len(expr.exprs), expr.exprs)
