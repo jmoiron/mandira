@@ -62,8 +62,25 @@ func tErr(t *testing.T, err error) {
 	}
 }
 
-func TestCondParser(t *testing.T) {
+// shortcut for a new token list
+func ntl(s string) *tokenList {
+	tl, _ = tokenize(s)
+	return &tokenList{tl, 0, 0}
+}
 
+func TestCondParser(t *testing.T) {
+	expr, err := parseCondExpression(ntl("foo"))
+	tErr(err)
+	expr, err = parseCondExpression(ntl("not foo"))
+	tErr(err)
+	expr, err = parseCondExpression(ntl("foo > bar"))
+	tErr(err)
+	expr, err = parseCondExpression(ntl("foo != bar"))
+	tErr(err)
+	expr, err = parseCondExpression(ntl("foo or bar"))
+	tErr(err)
+	expr, err = parseCondExpression(ntl("not foo or not bar"))
+	tErr(err)
 }
 
 func TestVarParser(t *testing.T) {

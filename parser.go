@@ -161,11 +161,7 @@ func parseBoolExpression(tokens *tokenList) (interface{}, error) {
 	return c, nil
 }
 
-// Parse a condition, which can be:
-//   variable
-//   not condition
-//   "(" condition ")"
-//   condition binary condition
+// Parse a full condition expression:
 func parseCondExpression(tokens *tokenList) (*condExpr, error) {
 	var err error
 	c := &condExpr{}
