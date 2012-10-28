@@ -60,8 +60,8 @@ type cond struct {
 
 type bincond struct {
 	oper string
-	lhs  cond
-	rhs  cond
+	lhs  *cond
+	rhs  *cond
 }
 
 type condExpr struct {
@@ -166,7 +166,7 @@ func parseBoolExpression(tokens *tokenList) (interface{}, error) {
 //   not condition
 //   "(" condition ")"
 //   condition binary condition
-func parseCondExpression(tokens []string) (*condExpr, error) {
+func parseCondExpression(tokens *tokenList) (*condExpr, error) {
 	var err error
 	c := &condExpr{}
 	c.lhs, err = parseBoolExpression(tokens)
@@ -184,9 +184,9 @@ func parseCondExpression(tokens []string) (*condExpr, error) {
 		if err != nil {
 			return c, err
 		}
-		return c
+		return c, nil
 	}
-	return c
+	return c, nil
 }
 
 func parseFuncExpression(tokens *tokenList) (*funcExpr, error) {
