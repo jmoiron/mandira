@@ -104,16 +104,16 @@ family:
 
 The following filters are provided by default:
 
-* **upper** - variable in upper case
-* **lower** - variable in lower case
-* **title** - variable in title case
-* **len** - length of the variable
-* **index** - the numeric index of a list or string
-* **slice** - a slice of a list or string
-* **format** - printf-style formatted string
-* **date** - PHP style date formatted string
-* **join** - each element of the list joined with a string, `", "` by default
-* **divisibleby** - `true` if a number is divisible by an argument
+* `upper` - variable in upper case
+* `lower` - variable in lower case
+* `title` - variable in title case
+* `len` - length of the variable
+* `index` - the numeric index of a list or string
+* `slice` - a slice of a list or string
+* `format` - printf-style formatted string
+* `date` - PHP style date formatted string
+* `join` - each element of the list joined with a string, `", "` by default
+* `divisibleby` - `true` if a number is divisible by an argument
 
 More detailed information on their behavior and return values is available in the [implmentation specification]().
 
