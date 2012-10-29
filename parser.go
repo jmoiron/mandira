@@ -273,6 +273,20 @@ func parseVarExpression(tokens *tokenList) (*varExpr, error) {
 	return expr, nil
 }
 
+func parseVarElement(s string) (*varElement, error) {
+	var elem = &varElement{}
+	tokens, err := tokenize(s)
+	if err != nil {
+		return elem, err
+	}
+	expr, err := parseVarExpression(&tokenList{tokens, 0, 0})
+	if err != nil {
+		return elem, err
+	}
+	elem.expr = expr
+	return elem, nil
+}
+
 // tokenize a conditional, return a list of strings
 func tokenize(c string) ([]string, error) {
 	b := []byte(c)

@@ -18,6 +18,7 @@ type textElement struct {
 
 type varElement struct {
 	expr *varExpr
+	raw  bool
 }
 
 type conditionalElement struct {
@@ -221,10 +222,13 @@ func (tmpl *Template) parseTag(tag string, section ...*sectionElement) error {
 	case '{':
 		if tag[len(tag)-1] == '}' {
 			//use a raw tag
-			*elems = append(*elems, &varElement{tag[1 : len(tag)-1], true})
+			elem, _ := parseVarElement(tag[1 : len(tag)-1])
+			elem.raw = true
+			*elems = append(*elems, elem)
 		}
 	default:
-		*elems = append(*elems, &varElement{tag, false})
+		elem, _ := parseVarElement(tag)
+		*elems = append(*elems, elem)
 	}
 	return nil
 }
@@ -483,19 +487,17 @@ func renderElement(element interface{}, contextChain []interface{}, buf io.Write
 	case *varElement:
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Panic while looking up %q: %s\n", elem.name, r)
+				fmt.Printf("Panic while looking up %q: %s\n", elem, r)
 			}
 		}()
-		val := lookup(contextChain, elem.name)
 
-		if val.IsValid() {
-			if elem.raw {
-				fmt.Fprint(buf, val.Interface())
-			} else {
-				s := fmt.Sprint(val.Interface())
-				htmlEscape(buf, []byte(s))
-			}
+		val, _ := elem.expr.Eval(contextChain)
+		if elem.raw {
+			fmt.Fprintf(buf, val)
+		} else {
+			htmlEscape(buf, []byte(val))
 		}
+
 	case *sectionElement:
 		renderSection(elem, contextChain, buf)
 	case *Template:

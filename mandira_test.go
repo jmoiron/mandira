@@ -186,6 +186,33 @@ You have just won $10000!
 	}
 }
 
+func TestFilters(t *testing.T) {
+	// TODO: test date filter, which must be written probably
+
+	names := []string{"john", "bob", "fred"}
+	tests := []Test{
+		{"{{name}}", M{"name": "Jason"}, "Jason"},
+		{"{{name|upper}}", M{"name": "jason"}, "JASON"},
+		{"{{name|len}}", M{"name": "jason"}, "5"},
+		{"{{name|index(3)}}", M{"name": "jason"}, "o"},
+		{"{{name|index(0)}}", M{"name": []string{"john", "bob", "fred"}}, "john"},
+		{"{{name|index(0)|upper}}", M{"name": names}, "JOHN"},
+		{"{{name|index(1)|title}}", M{"name": names}, "Bob"},
+		// index error returns empty string
+		{"{{name|index(5)}}", M{"name": names}, ""},
+		// index error doesn't blow up later on a filter chain
+		{"{{name|index(5)|title}}", M{"name": names}, ""},
+		{`{{name|format(">%s<")}}`, M{"name": "jason"}, "&gt;jason&lt;"},
+		{`{{{name|format(">%s<")}}}`, M{"name": "jason"}, ">jason<"},
+		{`{{names|join(", ")}}`, M{"names": names}, "john, bob, fred"},
+		{`{{names|len|divisibleby(2)}}`, M{"names": names}, "false"},
+		{`{{names|len|divisibleby(3)}}`, M{"names": names}, "true"},
+	}
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
 func TestIfBlocks(t *testing.T) {
 
 }
