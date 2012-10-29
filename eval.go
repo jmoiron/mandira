@@ -43,7 +43,6 @@ type varExpr struct {
 
 // Apply a filter to a value
 func (f *funcExpr) Apply(contexts []interface{}, input interface{}) (interface{}, error) {
-	// FIXME: for now all filters are no-ops
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Panic while applying filter %q: %v, %v", f.name, input, f.arguments)
@@ -56,11 +55,30 @@ func (f *funcExpr) Apply(contexts []interface{}, input interface{}) (interface{}
 	}
 
 	filterVal := reflect.ValueOf(filter)
-	//filterType := filterVal.Type()
+	filterType := filterVal.Type()
 
 	argvals := []reflect.Value{reflect.ValueOf(input)}
-	for _, arg := range f.arguments {
-		argvals = append(argvals, reflect.ValueOf(arg))
+	for i, arg := range f.arguments {
+		switch arg.(type) {
+		case string, int64, int, float64:
+			argvals = append(argvals, reflect.ValueOf(arg))
+		case *lookupExpr:
+			lu := arg.(*lookupExpr)
+			val := lookup(contexts, lu.name)
+			if !val.IsValid() {
+				return "", fmt.Errorf("Invalid lookup for filter argument: %s", lu.name)
+			}
+			argtype := filterType.In(i + 1)
+			switch argtype.Kind() {
+			case reflect.String:
+				argvals = append(argvals, reflect.ValueOf(fmt.Sprint(val.Interface())))
+			/* FIXME: check non-string types for context args in filters */
+			case reflect.Int, reflect.Int64:
+				argvals = append(argvals, reflect.ValueOf(val.Int()))
+			}
+		default:
+			fmt.Println("Unknown arg type")
+		}
 	}
 
 	retval := filterVal.Call(argvals)[0]
@@ -86,6 +104,8 @@ func (v *varExpr) Eval(contexts []interface{}) (string, error) {
 			return "", err
 		}
 	}
-
+	if inter == nil {
+		return "", nil
+	}
 	return fmt.Sprint(inter), nil
 }
