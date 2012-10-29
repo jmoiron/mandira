@@ -207,6 +207,7 @@ func TestFilters(t *testing.T) {
 		{`{{names|join(", ")}}`, M{"names": names}, "john, bob, fred"},
 		{`{{names|len|divisibleby(2)}}`, M{"names": names}, "false"},
 		{`{{names|len|divisibleby(3)}}`, M{"names": names}, "true"},
+		{`{{names|join(joiner)}}`, M{"names": names, "joiner": ", "}, "john, bob, fred"},
 	}
 	for _, test := range tests {
 		test.Run(t)
