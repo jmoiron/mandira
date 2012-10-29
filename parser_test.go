@@ -154,6 +154,31 @@ func TestCondParser(t *testing.T) {
 	if expr.oper != "and" {
 		t.Error("Expected and")
 	}
+
+	expr, err = parseCondExpression(ntl(`foo|len > bar|len|add(2)`))
+	tErr(t, err)
+	bc, ok = expr.lhs.(*bincond)
+	if !ok {
+		t.Fatalf("Expected binary condition, got %v", expr.lhs)
+	}
+	if bc.lhs.not || bc.rhs.not {
+		t.Error("Did not expect negated condition")
+	}
+	if bc.oper != ">" {
+		t.Error("Wrong operator, expected >, got " + bc.oper)
+	}
+
+	expr, err = parseCondExpression(ntl(`3.4 > "foo \"bar\" baz"`))
+	bc, ok = expr.lhs.(*bincond)
+	if !ok {
+		t.Fatalf("Expected binary condition, got %v", expr.lhs)
+	}
+	if bc.lhs.not || bc.rhs.not {
+		t.Error("Did not expect negated condition")
+	}
+	if bc.oper != ">" {
+		t.Error("Wrong operator, expected >, got " + bc.oper)
+	}
 }
 
 func TestVarParser(t *testing.T) {
@@ -270,5 +295,4 @@ func TestVarParser(t *testing.T) {
 	if s != "hi" {
 		t.Errorf(`Expecting "hi", got %s`+"\n", s)
 	}
-
 }

@@ -136,6 +136,22 @@ func parseAtom(token string) interface{} {
 	return &lookupExpr{token}
 }
 
+// Return either a literal or a variable expression
+func parseValue(tokens *tokenList) (interface{}, error) {
+	tok := tokens.Next()
+	if len(tok) == 0 {
+		return nil, &parserError{tokens, "Expected a value, found nothing"}
+	}
+	try := parseAtom(tok)
+	/* if this wasn't a lookupExpr, then it's a literal */
+	if _, ok := try.(*lookupExpr); !ok {
+		return try, nil
+	}
+	tokens.Prev()
+	varexp, err := parseVarExpression(tokens)
+	return varexp, err
+}
+
 // parse a single unary condition (or naked varexpr)
 func parseCond(tokens *tokenList) (*cond, error) {
 	var err error
@@ -145,7 +161,7 @@ func parseCond(tokens *tokenList) (*cond, error) {
 		c.not = true
 		tokens.Next()
 	}
-	c.expr, err = parseVarExpression(tokens)
+	c.expr, err = parseValue(tokens)
 	return c, err
 }
 

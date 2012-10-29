@@ -17,17 +17,11 @@ type textElement struct {
 }
 
 type varElement struct {
-	name string
-	raw  bool
+	expr *varExpr
 }
 
-type varExpression struct {
-	tokens []string
-	raw    bool
-}
-
-type conditionalExpression struct {
-	tokens []string
+type conditionalElement struct {
+	expr *condExpr
 }
 
 type sectionElement struct {
