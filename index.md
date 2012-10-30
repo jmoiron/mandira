@@ -34,7 +34,7 @@ Will produce the following:
 ```
 Hello Jason
 You have just won $10000!
-Well, $10000.0, after taxes.
+Well, $10000, after taxes.
 ```
 
 ## Language
@@ -222,7 +222,7 @@ Output:
 
 ## Status
 
-Currently, Mandira is only this loose specification.  I intend to get feedback on it and create a true specification, a reference implementation in [Go](http://golang.org) (maybe not in that order), and then live with it a while and see what works and what doesn't.
+Currently, Mandira has this loose specification and an **alpha quality** [reference implementation](http://github.com/jmoiron/mandira) in [Go](http://golang.org).  I intend to get feedback and live with it a while and see what works and what doesn't.
 
 If you are interested in this language and the ideas behind it, read my [Logic-less Template Redux](http://jmoiron.net/blog/logicless-template-redux/) blog post or ping [@jmoiron](http://twitter/com/jmoiron) on twitter.  The name Mandira is sanskrit for "Temple", and the script used in the title is *Mandira* in [Gujarati](http://en.wikipedia.org/wiki/Gujarati_language).
 
