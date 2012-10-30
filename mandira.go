@@ -21,15 +21,14 @@ type varElement struct {
 	raw  bool
 }
 
-type conditionalElement struct {
-	expr *condExpr
-}
-
 type sectionElement struct {
-	name      string
-	startline int
-	elems     []interface{}
-	tokens    []string
+	name          string
+	startline     int
+	isConditional bool
+	hasElse       bool
+	expr          *condExpr
+	elems         []interface{}
+	elseElems     []interface{}
 }
 
 type Template struct {
@@ -164,9 +163,16 @@ func (tmpl *Template) parsePartial(name string) (*Template, error) {
 // the new elements to that section.  Otherwise, append the elements to
 // the template.
 func (tmpl *Template) parseTag(tag string, section ...*sectionElement) error {
+	var current *sectionElement
 	elems := &tmpl.elems
+
 	if len(section) == 1 {
-		elems = &section[0].elems
+		current = section[0]
+		if current.hasElse {
+			elems = &current.elseElems
+		} else {
+			elems = &current.elems
+		}
 	}
 
 	if len(tag) == 0 {
@@ -186,26 +192,37 @@ func (tmpl *Template) parseTag(tag string, section ...*sectionElement) error {
 		} else if len(tmpl.data) > tmpl.p+1 && tmpl.data[tmpl.p] == '\r' && tmpl.data[tmpl.p+1] == '\n' {
 			tmpl.p += 2
 		}
-
-		se := sectionElement{name, tmpl.curline, []interface{}{}, []string{}}
+		se := sectionElement{}
+		se.name = name
+		se.startline = tmpl.curline
+		se.elems = []interface{}{}
 		err := tmpl.parseSection(&se)
 		if err != nil {
 			return err
 		}
 		*elems = append(*elems, &se)
 	case '?':
-		if tag[:4] != "?if " {
+		if tag[:4] == "?if " {
+			se, err := parseCondElement(tag[4:])
+			if err != nil {
+				return err
+			}
+			se.name = "if"
+			se.isConditional = true
+			se.startline = tmpl.curline
+			err = tmpl.parseSection(se)
+			if err != nil {
+				return err
+			}
+			*elems = append(*elems, se)
+		} else if tag[:5] == "?else" {
+			current.hasElse = true
+			return nil
+		} else {
 			return parseError{tmpl.curline, "invalid conditional tag: " + tag}
 		}
-		name := "if"
 		/* FIXME: parse conditional into tokens */
-		tokens, err := tokenize(tag[4:])
-		se := sectionElement{name, tmpl.curline, []interface{}{}, tokens}
-		err = tmpl.parseSection(&se)
-		if err != nil {
-			return err
-		}
-		*elems = append(*elems, &se)
+		// tokens, err := tokenize(tag[4:])
 
 	case '/':
 		// if we aren't in a section, this is invalid
@@ -241,8 +258,15 @@ func (tmpl *Template) parseSection(section *sectionElement) error {
 		}
 
 		// put text into an item
+		elems := &section.elems
+
+		if section.hasElse {
+			elems = &section.elseElems
+		}
+
 		text = text[0 : len(text)-len(tmpl.otag)]
-		section.elems = append(section.elems, &textElement{[]byte(text)})
+		*elems = append(*elems, &textElement{[]byte(text)})
+
 		if tmpl.p < len(tmpl.data) && tmpl.data[tmpl.p] == '{' {
 			text, err = tmpl.readString("}" + tmpl.ctag)
 		} else {
@@ -257,6 +281,7 @@ func (tmpl *Template) parseSection(section *sectionElement) error {
 		//trim the close tag off the text
 		tag := strings.TrimSpace(text[0 : len(text)-len(tmpl.ctag)])
 		err = tmpl.parseTag(tag, section)
+
 		/* if it was an endSection, end the section */
 		if _, ok := err.(endSection); ok {
 			return nil
@@ -437,46 +462,59 @@ loop:
 }
 
 func renderSection(section *sectionElement, contextChain []interface{}, buf io.Writer) {
-	value := lookup(contextChain, section.name)
+	var value reflect.Value
+	var elems []interface{}
+
+	if !section.isConditional {
+		value = lookup(contextChain, section.name)
+		isNil := isNil(value)
+		if isNil {
+			return
+		}
+		elems = section.elems
+	} else {
+		if section.expr.Eval(contextChain) {
+			elems = section.elems
+		} else {
+			elems = section.elseElems
+		}
+	}
+
 	var context = contextChain[len(contextChain)-1].(reflect.Value)
 	var contexts = []interface{}{}
-	// if the value is nil, check if it's an inverted section
-	isNil := isNil(value)
-	if isNil {
-		return
-	}
-	// FIXME: we won't have inverted sections;  instead, we'll have to see if
-	// the section is conditional at all and then execute that conditional on
-	// the context to see if it passes
-	//if isNil && !section.conditional || !isNil && section.conditional {
-	//	return
-	//} else {
-	valueInd := indirect(value)
-	switch val := valueInd; val.Kind() {
-	case reflect.Slice:
-		for i := 0; i < val.Len(); i++ {
-			contexts = append(contexts, val.Index(i))
-		}
-	case reflect.Array:
-		for i := 0; i < val.Len(); i++ {
-			contexts = append(contexts, val.Index(i))
-		}
-	case reflect.Map, reflect.Struct:
-		contexts = append(contexts, value)
-	default:
-		contexts = append(contexts, context)
-	}
-	//}
 
-	chain2 := make([]interface{}, len(contextChain)+1)
-	copy(chain2[1:], contextChain)
-	//by default we execute the section
-	for _, ctx := range contexts {
-		chain2[0] = ctx
-		for _, elem := range section.elems {
-			renderElement(elem, chain2, buf)
+	// if this is a real section, create a level in the context chain
+	if !section.isConditional {
+		valueInd := indirect(value)
+		switch val := valueInd; val.Kind() {
+		case reflect.Slice:
+			for i := 0; i < val.Len(); i++ {
+				contexts = append(contexts, val.Index(i))
+			}
+		case reflect.Array:
+			for i := 0; i < val.Len(); i++ {
+				contexts = append(contexts, val.Index(i))
+			}
+		case reflect.Map, reflect.Struct:
+			contexts = append(contexts, value)
+		default:
+			contexts = append(contexts, context)
+		}
+		chain2 := make([]interface{}, len(contextChain)+1)
+		copy(chain2[1:], contextChain)
+		//by default we execute the section
+		for _, ctx := range contexts {
+			chain2[0] = ctx
+			for _, elem := range elems {
+				renderElement(elem, chain2, buf)
+			}
+		}
+	} else {
+		for _, elem := range elems {
+			renderElement(elem, contextChain, buf)
 		}
 	}
+
 }
 
 func renderElement(element interface{}, contextChain []interface{}, buf io.Writer) {
@@ -492,10 +530,11 @@ func renderElement(element interface{}, contextChain []interface{}, buf io.Write
 		}()
 
 		val, _ := elem.expr.Eval(contextChain)
+		sval := fmt.Sprint(val)
 		if elem.raw {
-			fmt.Fprintf(buf, val)
+			fmt.Fprintf(buf, sval)
 		} else {
-			htmlEscape(buf, []byte(val))
+			htmlEscape(buf, []byte(sval))
 		}
 
 	case *sectionElement:

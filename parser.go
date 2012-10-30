@@ -287,6 +287,20 @@ func parseVarElement(s string) (*varElement, error) {
 	return elem, nil
 }
 
+func parseCondElement(s string) (*sectionElement, error) {
+	var elem = &sectionElement{}
+	tokens, err := tokenize(s)
+	if err != nil {
+		return elem, err
+	}
+	expr, err := parseCondExpression(&tokenList{tokens, 0, 0})
+	if err != nil {
+		return elem, err
+	}
+	elem.expr = expr
+	return elem, nil
+}
+
 // tokenize a conditional, return a list of strings
 func tokenize(c string) ([]string, error) {
 	b := []byte(c)

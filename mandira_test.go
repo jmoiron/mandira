@@ -166,7 +166,9 @@ Well, ${{taxed_value}}, after taxes.
 		},
 			`Hello Jason
 You have just won $10000!
-Well, $10000.0, after taxes.`},
+
+Well, $10000, after taxes.
+`},
 		{`Hello {{name}}
 You have just won ${{value}}!
 {{?if in_monaco}}
@@ -215,5 +217,25 @@ func TestFilters(t *testing.T) {
 }
 
 func TestIfBlocks(t *testing.T) {
+	//names := []string{"john", "bob", "fred"}
+	tests := []Test{
+		{`{{?if name}}Hello{{/if}}`, M{"name": true}, "Hello"},
+		{`{{?if name}}Hello{{/if}}`, M{"name": "hi"}, "Hello"},
+		{`{{?if name}}Hello{{/if}}`, M{"name": 1}, "Hello"},
+		{`{{?if name}}Hello{{/if}}`, M{"name": []string{"hi"}}, "Hello"},
+		{`{{?if name|len > 4}}True{{/if}}`, M{"name": "alex"}, ""},
+		{`{{?if name|len > 4}}True{{/if}}`, M{"name": "alexander"}, "True"},
+		{`{{?if age|divisibleby(2)}}True{{/if}}`, M{"age": 30}, "True"},
+		{`{{?if age|divisibleby(2)}}True{{/if}}`, M{"age": 31}, ""},
+		{`{{?if name == "john"}}Yes!{{?else}}No!{{/if}}`, M{"name": "ted"}, "No!"},
+		{`{{?if name == "john"}}Yes!{{?else}}No!{{/if}}`, M{"name": "john"}, "Yes!"},
+		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "john"}, "Yes!"},
+		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "ted"}, "Yes!"},
+		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "fred"}, "No!"},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
 
 }

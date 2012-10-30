@@ -41,6 +41,126 @@ type varExpr struct {
 }
 */
 
+func compInt(oper string, l, r int64) bool {
+	switch oper {
+	case ">":
+		return l > r
+	case ">=":
+		return l >= r
+	case "<":
+		return l < r
+	case "<=":
+		return l <= r
+	case "!=":
+		return l != r
+	case "==":
+		return l == r
+	}
+	return false
+}
+
+func compString(oper, l, r string) bool {
+	switch oper {
+	case ">":
+		return l > r
+	case ">=":
+		return l >= r
+	case "<":
+		return l < r
+	case "<=":
+		return l <= r
+	case "!=":
+		return l != r
+	case "==":
+		return l == r
+	}
+	return false
+
+}
+
+// Evaluate a unary condition;  evaluates either to the value of the expression
+// or a boolean (tested with isNil) if the expression is a negation
+func (c *cond) Eval(contexts []interface{}) (interface{}, error) {
+	var exprval interface{}
+	switch c.expr.(type) {
+	case *varExpr:
+		exprval, _ = c.expr.(*varExpr).Eval(contexts)
+	case string:
+		exprval = fmt.Sprint(c.expr)
+	case int64:
+		exprval = c.expr.(int64)
+	case float64:
+		exprval = c.expr.(float64)
+	}
+
+	if c.not {
+		return isNil(reflect.ValueOf(exprval)), nil
+	}
+	return exprval, nil
+}
+
+// Evaluate a binary condition;  evaluates to a boolean value
+func (c *bincond) Eval(contexts []interface{}) bool {
+	lhs, _ := c.lhs.Eval(contexts)
+	rhs, _ := c.rhs.Eval(contexts)
+
+	vl := reflect.ValueOf(lhs)
+	vr := reflect.ValueOf(rhs)
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Panic while doing comparisson: %v, %v", lhs, rhs)
+		}
+	}()
+
+	switch vl.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return compInt(c.oper, vl.Int(), vr.Int())
+	case reflect.Uint, reflect.Uintptr, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return compInt(c.oper, int64(vl.Uint()), int64(vr.Uint()))
+	case reflect.String:
+		return compString(c.oper, vl.String(), vr.String())
+	}
+
+	return false
+}
+
+func (c *condExpr) Eval(contexts []interface{}) bool {
+	var lhsval interface{}
+
+	switch c.lhs.(type) {
+	case *bincond:
+		lhsval = c.lhs.(*bincond).Eval(contexts)
+	case *cond:
+		lhsval, _ = c.lhs.(*cond).Eval(contexts)
+	default:
+		return false
+	}
+
+	if len(c.oper) == 0 {
+		return !isNil(reflect.ValueOf(lhsval))
+	}
+
+	var rhsval interface{}
+	switch c.rhs.(type) {
+	case *bincond:
+		rhsval = c.rhs.(*bincond).Eval(contexts)
+	case *cond:
+		rhsval, _ = c.rhs.(*cond).Eval(contexts)
+	default:
+		return false
+	}
+
+	switch c.oper {
+	case "and":
+		return !isNil(reflect.ValueOf(lhsval)) && !isNil(reflect.ValueOf(rhsval))
+	case "or":
+		return !isNil(reflect.ValueOf(lhsval)) || !isNil(reflect.ValueOf(rhsval))
+	}
+
+	return false
+}
+
 // Apply a filter to a value
 func (f *funcExpr) Apply(contexts []interface{}, input interface{}) (interface{}, error) {
 	defer func() {
@@ -77,7 +197,7 @@ func (f *funcExpr) Apply(contexts []interface{}, input interface{}) (interface{}
 				argvals = append(argvals, reflect.ValueOf(val.Int()))
 			}
 		default:
-			fmt.Println("Unknown arg type")
+			fmt.Printf("Unknown arg type %v\n", arg)
 		}
 	}
 
@@ -86,7 +206,7 @@ func (f *funcExpr) Apply(contexts []interface{}, input interface{}) (interface{}
 }
 
 // Evaluate a varExpr given the contexts.  Return a string and possible error
-func (v *varExpr) Eval(contexts []interface{}) (string, error) {
+func (v *varExpr) Eval(contexts []interface{}) (interface{}, error) {
 	var err error
 	expr := v.exprs[0].(*lookupExpr)
 	val := lookup(contexts, expr.name)
@@ -107,5 +227,5 @@ func (v *varExpr) Eval(contexts []interface{}) (string, error) {
 	if inter == nil {
 		return "", nil
 	}
-	return fmt.Sprint(inter), nil
+	return inter, nil
 }
