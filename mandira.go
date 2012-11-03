@@ -26,7 +26,7 @@ type sectionElement struct {
 	startline     int
 	isConditional bool
 	hasElse       bool
-	expr          *condExpr
+	expr          *conditional
 	elems         []interface{}
 	elseElems     []interface{}
 }

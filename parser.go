@@ -8,72 +8,60 @@ import (
 /* Parser for the extended features in Mandira.
 
 word = ([a-zA-Z1-9]+)
-dot = .
 binop = <|<=|>|>=|!=|==
 comb = or|and
 unary = not
 filter = |
 variable = word
 string = " .* "
-int = [0-9]+
-float = int dot [int]
-bool = true | false
-atom = variable | string | int | float | bool
+atom = variable | string | word
 funcexpr = word [( atom[, atom...] )]
 varexpr = variable [|funcexpr...]
 
-The following grammar describes a simplified, easy to implement boolean algebra.
+Conditional logic is mostly as expected, with operators of the same precedence
+being computed from left to right.  
 
-Conditions can be a varexpr (var|filter...) or a negated var expr.
-Binary Conditions must be two of these joined by a numeric binop
-ConditionalExpressions are either one Condition (either type), or two joined by
-a boolean combinator (and/or).
+They are, from low to high: binops, combs, unary, parens
 
-Multiple and/or is prohibited.  Grouping is unnecessary.  To achieve more complex
-logic, use multiple conditional blocks. Numeric operators take precedence over and/or.
-Binary logic is evaluated from left to right, and & ors are short circuited by
-false & true values in the lhs, respectively.
-
-cond = varexpr | not varexpr
-bincond = cond binop cond
-boolexpr = cond | bincond
-condexpr = boolexpr [comb boolexpr]
+In the future, "and" may be higher priority than "or".
 
 */
 
-// -- Literals 
-
+// A lookup expression is a naked word which will be looked up in the context at render time
 type lookupExpr struct {
 	name string
 }
 
+// A varExpr is a lookupExpr followed by zero or more funcExprs
+type varExpr struct {
+	exprs []interface{}
+}
+
+// A func expression has a function name to be looked up in the filter list 
+// at render time and a list of arguments, which are varExprs or literals
 type funcExpr struct {
-	name string
-	// these are either literal values or lookup expressions
+	name      string
 	arguments []interface{}
 }
 
+// A cond is a unary condition with a single value and optional negation
 type cond struct {
 	not  bool
 	expr interface{}
 }
 
-type bincond struct {
-	oper string
-	lhs  *cond
-	rhs  *cond
-}
-
-type condExpr struct {
-	oper string
-	lhs  interface{}
-	rhs  interface{}
-}
-
-type varExpr struct {
+// A conditional is a n-ary conditional with n opers and n+1 expressions, which
+// can be conds or conditionals
+type conditional struct {
+	not   bool
+	opers []string
 	exprs []interface{}
 }
 
+// A list of tokens with a pointer (p) and a run (run)
+// In tokenizing, this structure tracks tokens, but p points to the []byte
+// being tokenized, and run keeps track of the length of the current token
+// In parsing, this p is used as a pointer to a token in tokens
 type tokenList struct {
 	tokens []string
 	p      int
@@ -120,7 +108,6 @@ func (p *parserError) Error() string {
 }
 
 // Parse an atom;  an atom is a literal or a lookup expression.
-// lookup expressions can have any text but whitespace in them
 func parseAtom(token string) interface{} {
 	if token[0] == '"' {
 		return token[1 : len(token)-1]
@@ -136,7 +123,7 @@ func parseAtom(token string) interface{} {
 	return &lookupExpr{token}
 }
 
-// Return either a literal or a variable expression
+// parse a value, which is a literal or a variable expression
 func parseValue(tokens *tokenList) (interface{}, error) {
 	tok := tokens.Next()
 	if len(tok) == 0 {
@@ -152,68 +139,72 @@ func parseValue(tokens *tokenList) (interface{}, error) {
 	return varexp, err
 }
 
-// parse a single unary condition (or naked varexpr)
+// parse a value and return a unary cond expr (to negate values)
 func parseCond(tokens *tokenList) (*cond, error) {
 	var err error
 	c := &cond{}
-	tok := tokens.Peek()
-	if tok == "not" {
-		c.not = true
-		tokens.Next()
-	}
 	c.expr, err = parseValue(tokens)
 	return c, err
 }
 
-// parse a unary or binary boolean expression and return it.
-// Valid return values are of type cond or bincond
-func parseBoolExpression(tokens *tokenList) (interface{}, error) {
-	c, err := parseCond(tokens)
-	if err != nil {
-		return c, err
-	}
-	tok := tokens.Peek()
-	switch tok {
-	case "<", "<=", ">", ">=", "==", "!=":
-		tokens.Next()
-		c2, err := parseCond(tokens)
-		if err != nil {
-			return c2, err
+// Parse a conditional expression, recurse each time a paren is encountered
+func parseCondition(tokens *tokenList) (*conditional, error) {
+	c := &conditional{}
+	negated := false
+	expectCond := true
+
+	for tok := tokens.Next(); len(tok) > 0; tok = tokens.Next() {
+		switch tok {
+		case "(":
+			if !expectCond {
+				return c, &parserError{tokens, "Expected an operator, not a " + tok}
+			}
+			expr, err := parseCondition(tokens)
+			if err != nil {
+				return c, err
+			}
+			expr.not = negated
+			c.exprs = append(c.exprs, expr)
+
+			negated = false
+			expectCond = false
+		case "not":
+			if !expectCond {
+				return c, &parserError{tokens, "Expected an operator, not a " + tok}
+			}
+			negated = !negated
+		case ")":
+			if expectCond {
+				return c, &parserError{tokens, "Expected a condition, not a " + tok}
+			}
+			return c, nil
+		case "or", "and", ">", "<", "<=", ">=", "==", "!=":
+			if expectCond {
+				return c, &parserError{tokens, "Expected a condition, not an operator " + tok}
+			}
+			c.opers = append(c.opers, tok)
+			expectCond = true
+		default:
+			if !expectCond {
+				return c, &parserError{tokens, "Expected an operator, not " + tok}
+			}
+			tokens.Prev()
+			expr, err := parseCond(tokens)
+			if err != nil {
+				return c, err
+			}
+			expr.not = negated
+			c.exprs = append(c.exprs, expr)
+			// reset everything
+			expectCond = false
+			negated = false
 		}
-		// disallow things like "not foo > bar" in favor of "foo <= bar"
-		// and also nonsensical stuff like "not foo > not bar"
-		if c.not || c2.not {
-			return nil, &parserError{tokens, "Unary operators invalid in binary conditions (use converse of binary operator instead)"}
-		}
-		return &bincond{tok, c, c2}, nil
 	}
+
 	return c, nil
 }
 
-// Parse a full condition expression:
-func parseCondExpression(tokens *tokenList) (*condExpr, error) {
-	var err error
-	c := &condExpr{}
-	c.lhs, err = parseBoolExpression(tokens)
-
-	if err != nil {
-		return &condExpr{}, err
-	}
-
-	tok := tokens.Peek()
-	switch tok {
-	case "and", "or":
-		c.oper = tok
-		tokens.Next()
-		c.rhs, err = parseBoolExpression(tokens)
-		if err != nil {
-			return c, err
-		}
-		return c, nil
-	}
-	return c, nil
-}
-
+// parse a function expression, which comes after each | in a filter
 func parseFuncExpression(tokens *tokenList) (*funcExpr, error) {
 	fe := &funcExpr{}
 	fe.name = tokens.Next()
@@ -238,6 +229,7 @@ func parseFuncExpression(tokens *tokenList) (*funcExpr, error) {
 	return fe, nil
 }
 
+// parse a variable expression, which is a lookup + 0 or more func exprs
 func parseVarExpression(tokens *tokenList) (*varExpr, error) {
 
 	expr := &varExpr{}
@@ -273,6 +265,7 @@ func parseVarExpression(tokens *tokenList) (*varExpr, error) {
 	return expr, nil
 }
 
+// Parse aa "variable element", which returns a varElement (AST)
 func parseVarElement(s string) (*varElement, error) {
 	var elem = &varElement{}
 	tokens, err := tokenize(s)
@@ -287,13 +280,14 @@ func parseVarElement(s string) (*varElement, error) {
 	return elem, nil
 }
 
+// Parse a "conditional element", which returns a conditional section element (AST)
 func parseCondElement(s string) (*sectionElement, error) {
 	var elem = &sectionElement{}
 	tokens, err := tokenize(s)
 	if err != nil {
 		return elem, err
 	}
-	expr, err := parseCondExpression(&tokenList{tokens, 0, 0})
+	expr, err := parseCondition(&tokenList{tokens, 0, 0})
 	if err != nil {
 		return elem, err
 	}
@@ -301,7 +295,7 @@ func parseCondElement(s string) (*sectionElement, error) {
 	return elem, nil
 }
 
-// tokenize a conditional, return a list of strings
+// tokenize an expression, returning a list of strings or an error
 func tokenize(c string) ([]string, error) {
 	b := []byte(c)
 	tn := tokenList{[]string{}, 0, 0}

@@ -216,7 +216,7 @@ func TestFilters(t *testing.T) {
 	}
 }
 
-func TestIfBlocks(t *testing.T) {
+func TestConditionals(t *testing.T) {
 	//names := []string{"john", "bob", "fred"}
 	tests := []Test{
 		{`{{?if name}}Hello{{/if}}`, M{"name": true}, "Hello"},
@@ -232,6 +232,28 @@ func TestIfBlocks(t *testing.T) {
 		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "john"}, "Yes!"},
 		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "ted"}, "Yes!"},
 		{`{{?if name == "john" or name == "ted"}}Yes!{{?else}}No!{{/if}}`, M{"name": "fred"}, "No!"},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestComplexConditionals(t *testing.T) {
+	tests := []Test{
+		{`{{?if (name)}}Hello{{/if}}`, M{"name": true}, "Hello"},
+		{`{{?if (one > two)}}Hello{{/if}}`, M{"one": 1, "two": 2}, ""},
+		{`{{?if (one < two)}}Hello{{/if}}`, M{"one": 1, "two": 2}, "Hello"},
+		{`{{?if one or two or three}}Hello{{/if}}`, M{"one": false, "two": false, "three": true}, "Hello"},
+		{`{{?if one or two or not three}}Hello{{/if}}`, M{"one": false, "two": false, "three": true}, ""},
+		{`{{?if not (one or two)}}Hello{{/if}}`, M{"one": false, "two": false}, "Hello"},
+		{`{{?if (not (one or two)) and three}}Hello{{/if}}`, M{"one": false, "two": false, "three": true}, "Hello"},
+		{`{{?if 1 < 2 and 2 < 3}}Hello{{/if}}`, M{}, "Hello"},
+		{`{{?if not (1 < 2 and 2 < 3)}}Hello{{/if}}`, M{}, ""},
+		// no booleans literals, so this will be looked up in the context
+		{`{{?if true}}Hello{{/if}}`, M{}, ""},
+		{`{{?if true}}Hello{{/if}}`, M{"true": true}, "Hello"},
+		{`{{?if true}}Hello{{/if}}`, M{"true": false}, ""},
 	}
 
 	for _, test := range tests {
