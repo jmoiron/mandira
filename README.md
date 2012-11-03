@@ -39,7 +39,7 @@ Well, $10000.0, after taxes.
 
 ## Status
 
-Currently, Mandira has [a loose specification](http://jmoiron.github.com/mandira) and an **alpha quality** reference implementation in [Go](http://golang.org).  This implementation doesn't currently support the `{{.}}` or `{{.index}}` looping feature nor the `dateformat` function.  I intend to get feedback on it and live with it a while and see what works and what doesn't.
+Currently, Mandira has [a loose specification](http://jmoiron.github.com/mandira) and an **alpha quality** reference implementation in [Go](http://golang.org).  I intend to get feedback on it and live with it a while and see what works and what doesn't.
 
 If you are interested in this language and the ideas behind it, read my [Logic-less Template Redux](http://jmoiron.net/blog/logicless-template-redux/) blog post or ping [@jmoiron](http://twitter/com/jmoiron) on twitter.  The name Mandira is sanskrit for "Temple", and the script used in the title is *Mandira* in [Gujarati](http://en.wikipedia.org/wiki/Gujarati_language).
 
