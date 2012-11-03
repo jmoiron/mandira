@@ -21,6 +21,11 @@ type varElement struct {
 	raw  bool
 }
 
+type listContext struct {
+	index   int
+	context interface{}
+}
+
 type sectionElement struct {
 	name          string
 	startline     int
@@ -386,9 +391,19 @@ func lookup(contextChain []interface{}, name string) reflect.Value {
 		}
 	}()
 
+	var v reflect.Value
+	var index int
+	isList := false
+
 Outer:
 	for _, ctx := range contextChain { //i := len(contextChain) - 1; i >= 0; i-- {
-		v := ctx.(reflect.Value)
+		if lc, ok := ctx.(*listContext); ok {
+			v = lc.context.(reflect.Value)
+			index = lc.index
+			isList = true
+		} else {
+			v = ctx.(reflect.Value)
+		}
 		for v.IsValid() {
 			typ := v.Type()
 			if n := v.Type().NumMethod(); n > 0 {
@@ -403,6 +418,15 @@ Outer:
 			if name == "." {
 				return v
 			}
+			if isList {
+				switch name {
+				case ".index":
+					return reflect.ValueOf(index)
+				case ".index1":
+					return reflect.ValueOf(index + 1)
+				}
+			}
+
 			switch av := v; av.Kind() {
 			case reflect.Ptr:
 				v = av.Elem()
@@ -492,11 +516,11 @@ func renderSection(section *sectionElement, contextChain []interface{}, buf io.W
 		switch val := valueInd; val.Kind() {
 		case reflect.Slice:
 			for i := 0; i < val.Len(); i++ {
-				contexts = append(contexts, val.Index(i))
+				contexts = append(contexts, &listContext{i, val.Index(i)})
 			}
 		case reflect.Array:
 			for i := 0; i < val.Len(); i++ {
-				contexts = append(contexts, val.Index(i))
+				contexts = append(contexts, &listContext{i, val.Index(i)})
 			}
 		case reflect.Map, reflect.Struct:
 			contexts = append(contexts, value)

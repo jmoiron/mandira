@@ -265,7 +265,8 @@ func TestContextSensitiveVariables(t *testing.T) {
 	tests := []Test{
 		{`{{.index}}`, M{".index": "hi"}, "hi"},
 		{`{{#list}}{{.index}}{{/list}}`, M{"list": []string{"foo", "bar"}}, "01"},
-		{`{{#list}}{{.index}}. {{.}} {{/list}}`, M{"list": []string{"foo", "bar"}}, "0. foo 1. bar"},
+		{`{{#list}}{{.index}}. {{.}} {{/list}}`, M{"list": []string{"foo", "bar"}}, "0. foo 1. bar "},
+		{`{{#list}}{{.index1}}. {{.}} {{/list}}`, M{"list": []string{"foo", "bar"}}, "1. foo 2. bar "},
 	}
 
 	for _, test := range tests {
