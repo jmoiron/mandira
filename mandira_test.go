@@ -259,5 +259,16 @@ func TestComplexConditionals(t *testing.T) {
 	for _, test := range tests {
 		test.Run(t)
 	}
+}
 
+func TestContextSensitiveVariables(t *testing.T) {
+	tests := []Test{
+		{`{{.index}}`, M{".index": "hi"}, "hi"},
+		{`{{#list}}{{.index}}{{/list}}`, M{"list": []string{"foo", "bar"}}, "01"},
+		{`{{#list}}{{.index}}. {{.}} {{/list}}`, M{"list": []string{"foo", "bar"}}, "0. foo 1. bar"},
+	}
+
+	for _, test := range tests {
+		test.Run(t)
+	}
 }
