@@ -176,17 +176,16 @@ b. 15 August 1769, d. 5 May 1821
 
 ### Conditionals
 
-Conditional logic is done via a section which looks like `{{?if condition}}...{{?else}}...{{/if}}`, where the `else` condition is optional.  The condition can be any variable + filter expression, or any number of these expressions combined with the following standard boolean operators:
+Conditional logic is done via a section which looks like `{{?if condition}}...{{?else}}...{{/if}}`, where the `else` section is optional.  The condition itself is standard boolean logic and allows filtered variables, with the operators:
 
 * numeric operators `==`, `!=`, `<`, `>`, `<=`, `>=`
 * logical operators `not`, `and`, `or`
 
-Mandira allows literals in expressions for use in conditional logic and as arguments to filters.  The following shows examples of each data type, with the *falsey* value shown first:
+Mandira also allows literals in expressions for use in conditional logic and as arguments to filters.  The following shows examples of each data type, with the *falsey* value shown first:
 
 * integers `0`, `1`, `213`
 * floats: `0.0`, `1.4`, `3.14`
 * strings: `""`,  `"hello, world!"`, `"મંદિર"`
-* booleans: `false`, `true`
 
 Putting it all together:
 

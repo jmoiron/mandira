@@ -183,17 +183,16 @@ b. 15 August 1769, d. 5 May 1821
 </pre>
 
 <h3>Conditionals</h3>
-<p>Conditional logic is done via a section which looks like <code>{{?if condition}}...{{?else}}...{{/if}}</code>, where the <code>else</code> condition is optional.  The condition can be any variable + filter expression, or any number of these expressions combined with the following standard boolean operators:</p>
+<p>Conditional logic is done via a section which looks like <code>{{?if condition}}...{{?else}}...{{/if}}</code>, where the <code>else</code> section is optional.  The condition itself is standard boolean logic and allows filtered variables, with the operators:</p>
 <ul>
 <li>numeric operators <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></li>
 <li>logical operators <code>not</code>, <code>and</code>, <code>or</code></li>
 </ul>
-<p>Mandira allows literals in expressions for use in conditional logic and as arguments to filters.  The following shows examples of each data type, with the <em>falsey</em> value shown first:</p>
+<p>Mandira also allows literals in expressions for use in conditional logic and as arguments to filters.  The following shows examples of each data type, with the <em>falsey</em> value shown first:</p>
 <ul>
 <li>integers <code>0</code>, <code>1</code>, <code>213</code></li>
 <li>floats: <code>0.0</code>, <code>1.4</code>, <code>3.14</code></li>
 <li>strings: <code>""</code>,  <code>"hello, world!"</code>, <code>"મંદિર"</code></li>
-<li>booleans: <code>false</code>, <code>true</code></li>
 </ul>
 <p>Putting it all together:</p>
 <p>Template:</p>
