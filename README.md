@@ -11,11 +11,13 @@ Mandira templates should look familiar to users of other templates.  It is calle
 A simple Mandira template:
 
 ```
-Hello {{name}}
-You have just won ${{value}}!
-{{?if in_monaco}}
-Well, ${{taxed_value}}, after taxes.
-{{/if}}
+{{#greetings}}
+  {{?if greeting|len > 4}}
+    {{greeting}}
+  {{?else}}
+    {{greeting}}, {{name}} ({{age}})
+  {{/if}}
+{{/greetings}}
 ```
 
 Given the following context:
@@ -23,19 +25,21 @@ Given the following context:
 ```
 {
   "name": "Jason",
-  "value": 10000,
-  "taxed_value": 10000.0,
-  "in_monaco": true
+  "greetings": [
+    {"greeting": "Hello"},
+    {"greeting": "Hi"}
+  ],
+  "age": 30
 }
 ```
 
 Will produce the following:
 
 ```
-Hello Jason
-You have just won $10000!
-Well, $10000.0, after taxes.
+Hello
+Hi, Jason (30)
 ```
+
 
 ## Status
 
