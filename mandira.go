@@ -559,7 +559,7 @@ func renderElement(element interface{}, contextChain []interface{}, buf io.Write
 		val, _ := elem.expr.Eval(contextChain)
 		sval := fmt.Sprint(val)
 		if elem.raw {
-			fmt.Fprintf(buf, sval)
+			fmt.Fprint(buf, sval)
 		} else {
 			htmlEscape(buf, []byte(sval))
 		}

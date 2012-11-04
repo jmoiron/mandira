@@ -68,7 +68,7 @@ func (c *cond) Eval(contexts []interface{}) (interface{}, error) {
 	case *varExpr:
 		exprval, _ = c.expr.(*varExpr).Eval(contexts)
 	case string:
-		exprval = fmt.Sprint(c.expr)
+		exprval = c.expr.(string)
 	case int64:
 		exprval = c.expr.(int64)
 	case float64:
