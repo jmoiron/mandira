@@ -1,5 +1,7 @@
 # મંદિર Mandira
 
+<a href="https://github.com/jmoiron/mandira/"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
 Mandira is a language agnostic logic-light templating system desigend to be usable on server and client side applications.  Mandira strives to be easy to learn, easy to implement, efficient to render, comfortable for designers, tollerable for developers, suitable for non-HTML documents, as flexible as necessary (but no more so), and consistent in style and rendering.
 
 <!-- It is heavily influenced by [Mustache](http://mustache.github.com/mustache.5.html), [Tempo](http://tempojs.com/), [Django Templates](https://docs.djangoproject.com/en/dev/ref/templates/) and [Jinja2](http://jinja.pocoo.org/docs/). -->
@@ -221,7 +223,7 @@ Output:
 
 ## Status
 
-Currently, Mandira has this loose specification and an **alpha quality** [reference implementation](http://github.com/jmoiron/mandira) in [Go](http://golang.org).  I intend to get feedback and live with it a while and see what works and what doesn't.
+Currently, Mandira has this loose specification and an **alpha quality** [reference implementation](http://github.com/jmoiron/mandira) in [Go](http://golang.org).  It is currently in use as the main templating language on [my personal website](http://jmoiron.net), where it replaced mustache.  I intend to get feedback and live with it a while and see what works and what doesn't.
 
 If you are interested in this language and the ideas behind it, read my [Logic-less Template Redux](http://jmoiron.net/blog/logicless-template-redux/) blog post or ping [@jmoiron](http://twitter/com/jmoiron) on twitter.  The name Mandira is sanskrit for "Temple", and the script used in the title is *Mandira* in [Gujarati](http://en.wikipedia.org/wiki/Gujarati_language).
 
