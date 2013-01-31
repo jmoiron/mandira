@@ -43,7 +43,7 @@ Hi, Jason (30)
 
 ## Status
 
-Currently, Mandira has [a specification](http://jmoiron.github.com/mandira) and an **alpha quality** reference implementation in [Go](http://golang.org).  It is currently the template language in use on [my personal website](http://jmoiron.net).  I intend to get feedback on it and live with it a while and see what works and what doesn't.
+Currently, Mandira has [a specification](http://jmoiron.github.com/mandira) and a beta quality reference implementation in [Go](http://golang.org).  It is currently the template language in use on [my personal website](http://jmoiron.net).  I intend to get feedback on it and live with it a while and see what works and what doesn't.
 
 If you are interested in this language and the ideas behind it, read my [Logic-less Template Redux](http://jmoiron.net/blog/logicless-template-redux/) blog post or ping [@jmoiron](http://twitter/com/jmoiron) on twitter.  The name Mandira is sanskrit for "Temple", and the script used in the title is *Mandira* in [Gujarati](http://en.wikipedia.org/wiki/Gujarati_language).
 
