@@ -10,17 +10,8 @@ import (
 type Loader struct {
 	Path    string
 	Preload bool
-	loaded  bool
+	Loaded  bool
 	cache   map[string]*Template
-}
-
-func NewLoader(path string, preload bool) *Loader {
-	loader := &Loader{Path: path, Preload: preload}
-	loader.cache = map[string]*Template{}
-	if preload {
-		loader.Refresh()
-	}
-	return loader
 }
 
 func anysuffix(has string, any ...string) bool {
@@ -32,11 +23,24 @@ func anysuffix(has string, any ...string) bool {
 	return false
 }
 
+func IsTemplate(path string) bool {
+	return anysuffix(path, "mnd", "mandira", "mda")
+}
+
+func NewLoader(path string, preload bool) *Loader {
+	loader := &Loader{Path: path, Preload: preload}
+	loader.cache = map[string]*Template{}
+	if preload {
+		loader.Refresh()
+	}
+	return loader
+}
+
 func (l *Loader) visitor(path string, f os.FileInfo, err error) error {
 	if err != nil || f == nil {
 		return nil
 	}
-	if f.Mode().IsRegular() && anysuffix(path, "mnd", "mandira", "mda") {
+	if f.Mode().IsRegular() && IsTemplate(path) {
 		tpl, err := ParseFile(path)
 		if err != nil {
 			return err
@@ -48,13 +52,13 @@ func (l *Loader) visitor(path string, f os.FileInfo, err error) error {
 
 func (l *Loader) Refresh() error {
 	err := filepath.Walk(l.Path, l.visitor)
-	l.loaded = true
+	l.Loaded = true
 	return err
 }
 
 func (l *Loader) Get(path string) (*Template, error) {
 	var err error
-	if l.Preload && !l.loaded {
+	if l.Preload && !l.Loaded {
 		err = l.Refresh()
 		if err != nil {
 			return nil, err
