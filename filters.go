@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 )
 
 var filters = map[string]interface{}{}
@@ -66,7 +67,12 @@ func Format(arg interface{}, format string) interface{} {
 }
 
 func Date(arg interface{}, format string) interface{} {
-	return ""
+	switch arg.(type) {
+	case time.Time:
+		return arg.(time.Time).Format(format)
+	default:
+		return fmt.Sprintf("? %#v", arg)
+	}
 }
 
 func Join(arg interface{}, joiner string) string {

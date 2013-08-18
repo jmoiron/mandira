@@ -2,6 +2,7 @@ package mandira
 
 import (
 	"testing"
+	"time"
 )
 
 type M map[string]interface{}
@@ -191,6 +192,7 @@ You have just won $10000!
 func TestFilters(t *testing.T) {
 	// TODO: test date filter, which must be written probably
 
+	today, _ := time.Parse("2006 Jan 2 15:04:05", "2011 Mar 3 12:01:00")
 	names := []string{"john", "bob", "fred"}
 	tests := []Test{
 		{"{{name}}", M{"name": "Jason"}, "Jason"},
@@ -210,6 +212,7 @@ func TestFilters(t *testing.T) {
 		{`{{names|len|divisibleby(2)}}`, M{"names": names}, "false"},
 		{`{{names|len|divisibleby(3)}}`, M{"names": names}, "true"},
 		{`{{names|join(joiner)}}`, M{"names": names, "joiner": ", "}, "john, bob, fred"},
+		{`{{today|date("15:04")}}`, M{"today": today}, "12:01"},
 	}
 	for _, test := range tests {
 		test.Run(t)
