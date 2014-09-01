@@ -1,5 +1,8 @@
 # મંદિર Mandira
 
+
+[![Build Status](https://drone.io/github.com/jmoiron/mandira/status.png)](https://drone.io/github.com/jmoiron/mandira/latest) [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/jmoiron/mandira) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/jmoiron/mandira/master/LICENSE)
+
 Mandira is a language agnostic logic-light templating system desigend to be usable on server and client side applications.  Mandira strives to be easy to learn, easy to implement, efficient to render, comfortable for designers, tollerable for developers, suitable for non-HTML documents, as flexible as necessary (but no more so), and consistent in style and rendering.
 
 It is heavily influenced by [Mustache](http://mustache.github.com/mustache.5.html), [Tempo](http://tempojs.com/), [Django Templates](https://docs.djangoproject.com/en/dev/ref/templates/) and [Jinja2](http://jinja.pocoo.org/docs/)
